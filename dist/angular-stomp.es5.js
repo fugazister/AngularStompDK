@@ -13,10 +13,22 @@ var ngstompProvider = (function () {
     }
 
     _createClass(ngstompProvider, {
+        connectWithHeaders: {
+            value: function connectWithHeaders(flag) {
+                this.settings.shouldConnectWithHeaders = flag;
+                return this;
+            }
+        },
         credential: {
             value: function credential(login, password) {
                 this.settings.login = login;
                 this.settings.password = password;
+                return this;
+            }
+        },
+        setHeaders: {
+            value: function setHeaders(headers) {
+                this.settings.headers = headers;
                 return this;
             }
         },
@@ -90,12 +102,17 @@ var ngStompWebSocket = (function () {
         this.connections = [];
         this.deferred = this.$q.defer();
         this.promiseResult = this.deferred.promise;
-        this.connect();
+
+        if (this.shouldConnectWithHeaders) {
+            this.connectWithHeaders();
+        } else {
+            this.connectWithPasscode();
+        }
     }
 
     _createClass(ngStompWebSocket, {
-        connect: {
-            value: function connect() {
+        connectWithPasscode: {
+            value: function connectWithPasscode() {
                 var _this = this;
 
                 this.stompClient.connect(this.settings.login, this.settings.password, function () {
@@ -106,6 +123,19 @@ var ngStompWebSocket = (function () {
                     _this.$digestStompAction();
                 }, this.settings.vhost);
                 return this.promiseResult;
+            }
+        },
+        connectWithHeaders: {
+            value: function connectWithHeaders() {
+                var _this = this;
+
+                this.stompClient.connect(this.settings.headers, function () {
+                    _this.deferred.resolve();
+                    _this.$digestStompAction();
+                }, function () {
+                    _this.deferred.reject();
+                    _this.$digestStompAction();
+                });
             }
         },
         subscribe: {
